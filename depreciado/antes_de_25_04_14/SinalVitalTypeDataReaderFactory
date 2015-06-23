@@ -1,0 +1,148 @@
+package br.ufg.inf.mestrado.guilherme.rtsct.factory;
+
+import java.util.HashMap;
+
+import br.ufg.inf.mestrado.guilherme.coreDX.SinalVitalTypeDataReader;
+import br.ufg.inf.mestrado.guilherme.rtsct.utils.Constantes;
+
+import com.toc.coredx.DDS.DDS;
+import com.toc.coredx.DDS.DataReaderListener;
+import com.toc.coredx.DDS.DataReaderQos;
+import com.toc.coredx.DDS.DomainParticipant;
+import com.toc.coredx.DDS.DurabilityQosPolicyKind;
+import com.toc.coredx.DDS.HistoryQosPolicyKind;
+import com.toc.coredx.DDS.OwnershipQosPolicyKind;
+import com.toc.coredx.DDS.ReliabilityQosPolicyKind;
+import com.toc.coredx.DDS.Subscriber;
+import com.toc.coredx.DDS.SubscriberListener;
+import com.toc.coredx.DDS.SubscriberQos;
+import com.toc.coredx.DDS.TopicDescription;
+import com.toc.coredx.DDS.coredx;
+
+// Fábrica de DataReader
+public class SinalVitalTypeDataReaderFactory {
+	
+	private static SinalVitalTypeDataReader drPressaoSanguinea;
+	private static SinalVitalTypeDataReader	drSaturacaoOxigenio;
+	private static SinalVitalTypeDataReader	drFrequenciaPulso;
+	private static SinalVitalTypeDataReader	drFrequenciaRespiratoria;
+	private static SinalVitalTypeDataReader	drTemperatura;
+	
+	private static DataReaderQos			drQos;
+	private static TopicDescription			td;
+	private static Subscriber				sub;
+	private static SubscriberListener		subListener;
+
+	public static SinalVitalTypeDataReader criarSinalVitalDataReader(DomainParticipant dp_sensor, String nome_topico, HashMap<String, Object> topicoQoS, String partition,
+			DataReaderListener drListener, SubscriberListener subListener){
+		
+		subListener = subListener;
+		
+		switch (nome_topico){
+			case Constantes.PRESSAO_SANGUINEA:				
+				if (drPressaoSanguinea == null)
+				{
+					atribuirQos(dp_sensor, nome_topico, topicoQoS, partition);
+					drPressaoSanguinea = (SinalVitalTypeDataReader) sub.create_datareader(td, drQos, drListener, mask());	
+				}
+				return drPressaoSanguinea;
+			case Constantes.SATURACAO_OXIGENIO_SANGUE:
+				if (drSaturacaoOxigenio == null)
+				{
+					atribuirQos(dp_sensor, nome_topico, topicoQoS, partition);
+					drSaturacaoOxigenio = (SinalVitalTypeDataReader) sub.create_datareader(td, drQos, drListener, mask());
+				}
+				return drSaturacaoOxigenio;
+			case Constantes.FREQUENCIA_PULSO:
+				if (drFrequenciaPulso == null)
+				{
+					atribuirQos(dp_sensor, nome_topico, topicoQoS, partition);
+					drFrequenciaPulso = (SinalVitalTypeDataReader) sub.create_datareader(td, drQos, drListener, mask());
+					//GuardCondition gc 
+					//drFrequenciaPulso.create_readcondition(arg0, arg1, arg2)
+				}
+				return drFrequenciaPulso;
+			case Constantes.FREQUENCIA_RESPIRATORIA:
+				if (drFrequenciaRespiratoria == null)
+				{
+					atribuirQos(dp_sensor, nome_topico, topicoQoS, partition);
+					drFrequenciaRespiratoria = (SinalVitalTypeDataReader) sub.create_datareader(td, drQos, drListener, mask());
+				}
+				return drFrequenciaRespiratoria;
+			case Constantes.TEMPERATURA:
+				if (drTemperatura == null)
+				{
+					atribuirQos(dp_sensor, nome_topico, topicoQoS, partition);
+					drTemperatura = (SinalVitalTypeDataReader) sub.create_datareader(td, drQos, drListener, mask());
+				}
+				return drTemperatura;
+			default:
+				return null;
+		}
+	}
+	
+	public static SinalVitalTypeDataReader getSinalVitalTypeDataReader(String nomeTopico)
+	{
+		switch (nomeTopico){
+		case Constantes.PRESSAO_SANGUINEA:				
+			return drPressaoSanguinea;
+		case Constantes.SATURACAO_OXIGENIO_SANGUE:
+			return drSaturacaoOxigenio;
+		case Constantes.FREQUENCIA_PULSO:
+			return drFrequenciaPulso;
+		case Constantes.FREQUENCIA_RESPIRATORIA:
+			return drFrequenciaRespiratoria;
+		case Constantes.TEMPERATURA:
+			return drTemperatura;
+		default:
+			return null;
+		}
+	}
+	
+	// Gera o subscriber com as respectivas QoS e associa a ele as QoS passadas do DataReader.
+	private static void atribuirQos(DomainParticipant dp_sensor, String nome_topico,
+			HashMap<String, Object> topicoQos,
+			String partition)
+	{	
+//		SubscriberQos sub_qos = new SubscriberQos();
+//		dp_sensor.get_default_subscriber_qos(sub_qos);
+//		sub_qos.partition.name.add(partition);
+//		sub_qos.entity_factory.autoenable_created_entities = false;
+//		sub = dp_sensor.create_subscriber(sub_qos, subListener, DDS.DATA_AVAILABLE_STATUS | DDS.DATA_ON_READERS_STATUS);
+		
+		td = dp_sensor.lookup_topicdescription(nome_topico);
+		
+		//td = dp_sensor.find_topic(nome_topico, new Duration_t(DDS.DURATION_INFINITE_SEC, DDS.DURATION_INFINITE_NSEC));
+		
+		drQos = new DataReaderQos();
+		sub.get_default_datareader_qos(drQos);
+		int deadline = (int)topicoQos.get(Constantes.QoS_deadline);
+		if (deadline != -1.0) {
+			drQos.deadline.period.sec     = (int)deadline;
+			drQos.deadline.period.nanosec = (long)((deadline - (int)deadline) * 1000000000);
+		}
+		int latency = (int)topicoQos.get(Constantes.QoS_latency);
+		drQos.latency_budget.duration.sec      = (int)latency;
+		drQos.latency_budget.duration.nanosec  = (long)((latency - (int)latency) * 1000000000);
+		
+		HistoryQosPolicyKind history = (HistoryQosPolicyKind)topicoQos.get(Constantes.QoS_history);
+		drQos.history.kind = history;
+		if (history == HistoryQosPolicyKind.KEEP_LAST_HISTORY_QOS) 
+			drQos.history.depth = (int)topicoQos.get(Constantes.QoS_history_depth);
+		drQos.reliability.kind = (ReliabilityQosPolicyKind)topicoQos.get(Constantes.QoS_reliability);
+		drQos.durability.kind  = (DurabilityQosPolicyKind)topicoQos.get(Constantes.QoS_durability);
+		drQos.ownership.kind   = (OwnershipQosPolicyKind)topicoQos.get(Constantes.QoS_ownership);
+		
+		int time_based_filter = (int)topicoQos.get(Constantes.QoS_time_based_filter);
+		drQos.time_based_filter.minimum_separation.sec = (int)time_based_filter;
+		drQos.time_based_filter.minimum_separation.nanosec = (long)((time_based_filter - (int)time_based_filter)*1000000000);
+	}
+	
+	private static long mask()
+	{
+		//return DDS.DATA_AVAILABLE_STATUS;
+		return coredx.getDDS_ALL_STATUS();
+		//return 0;
+	}
+}
+

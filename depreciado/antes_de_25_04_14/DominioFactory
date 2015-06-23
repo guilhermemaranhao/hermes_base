@@ -1,0 +1,17 @@
+package br.ufg.inf.mestrado.rtsct.factory;
+
+import br.ufg.inf.mestrado.rtsct.Dominio;
+
+public class DominioFactory {
+
+	private static Dominio dominio;
+	
+	public static Dominio getInstance()
+	{
+		if (dominio == null)
+		{
+			dominio = new Dominio();
+		}
+		return dominio;
+	}
+}

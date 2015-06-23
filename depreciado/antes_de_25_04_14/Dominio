@@ -1,0 +1,34 @@
+package br.ufg.inf.mestrado.rtsct;
+
+import com.toc.coredx.DDS.DomainParticipant;
+import com.toc.coredx.DDS.DomainParticipantFactory;
+import com.toc.coredx.DDS.DomainParticipantQos;
+import com.toc.coredx.DDS.LmtTransport;
+import com.toc.coredx.DDS.LmtTransportConfig;
+import com.toc.coredx.DDS.Transport;
+import com.toc.coredx.DDS.coredx;
+
+public class Dominio {
+	
+	DomainParticipantFactory 	dpf 			         	= null;
+	DomainParticipant        	dominio_participante       = null;
+	
+	public Dominio(){
+		dpf = DomainParticipantFactory.get_instance();
+		DomainParticipantQos dq_os = new DomainParticipantQos();
+		dpf.get_default_participant_qos(dq_os);
+		dominio_participante = dpf.create_participant(1, dq_os, null, coredx.getDDS_ALL_STATUS());
+		
+		
+	}
+	
+	private void adicionarTransporteLocal()
+	{
+		LmtTransportConfig configTransporte = new LmtTransportConfig();
+		configTransporte.get_default_config();
+		configTransporte.get_env_config();
+		Transport localTransporte = LmtTransport.create_transport(configTransporte);
+		dominio_participante.add_transport(localTransporte);
+	}
+ 
+}

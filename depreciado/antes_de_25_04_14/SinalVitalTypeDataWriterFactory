@@ -1,0 +1,154 @@
+package br.ufg.inf.mestrado.guilherme.rtsct.factory;
+
+import java.util.HashMap;
+
+import br.ufg.inf.mestrado.guilherme.coreDX.SinalVitalTypeDataWriter;
+import br.ufg.inf.mestrado.guilherme.rtsct.utils.Constantes;
+
+import com.toc.coredx.DDS.DDS;
+import com.toc.coredx.DDS.DataWriter;
+import com.toc.coredx.DDS.DataWriterListener;
+import com.toc.coredx.DDS.DataWriterQos;
+import com.toc.coredx.DDS.DomainParticipant;
+import com.toc.coredx.DDS.DurabilityQosPolicyKind;
+import com.toc.coredx.DDS.Duration_t;
+import com.toc.coredx.DDS.HistoryQosPolicyKind;
+import com.toc.coredx.DDS.OwnershipQosPolicyKind;
+import com.toc.coredx.DDS.Publisher;
+import com.toc.coredx.DDS.PublisherQos;
+import com.toc.coredx.DDS.ReliabilityQosPolicyKind;
+import com.toc.coredx.DDS.Topic;
+
+public class SinalVitalTypeDataWriterFactory {
+	
+//	private static SinalVitalTypeDataWriter dwPressaoSanguinea;
+//	private static SinalVitalTypeDataWriter dwPressaoSanguineaHipertensaoEstagio3;
+//	private static SinalVitalTypeDataWriter	dwSaturacaoOxigenio;
+//	private static SinalVitalTypeDataWriter	dwFrequenciaPulso;
+//	private static SinalVitalTypeDataWriter	dwFrequenciaRespiratoria;
+//	private static SinalVitalTypeDataWriter	dwTemperatura;
+	
+	private static DataWriterQos			dwQos;
+	//private static Topic					topico;
+
+	public static SinalVitalTypeDataWriter criarSinalVitalDataWriter(Publisher pub, Topic topico,
+			HashMap<String, Object> topicoQoS,
+			String partition,
+			DataWriterListener dwListener){	
+		
+		
+		
+		SinalVitalTypeDataWriter svdw = (SinalVitalTypeDataWriter)pub.lookup_datawriter(topico.get_name());
+		if (svdw == null)
+		{
+			atribuirQos(pub, topico, topicoQoS, partition);
+			svdw = (SinalVitalTypeDataWriter) pub.create_datawriter(topico, dwQos, dwListener, mask());
+		}
+		return svdw;
+		
+//		switch (nome_topico){
+//			case Constantes.PRESSAO_SANGUINEA:				
+//				if (pub.lookup_datawriter(nome_topico) == null)
+//				{
+//					atribuirQos(pub, dp_sensor, nome_topico, topicoQoS, partition);
+//					dwPressaoSanguinea = (SinalVitalTypeDataWriter) pub.create_datawriter(topico, dwQos, dwListener, mask());	
+//				}
+//				return dwPressaoSanguinea;
+//			case Constantes.SATURACAO_OXIGENIO_SANGUE:
+//				if (pub.lookup_datawriter(nome_topico) == null)
+//				{
+//					atribuirQos(pub, dp_sensor, nome_topico, topicoQoS, partition);
+//					dwSaturacaoOxigenio = (SinalVitalTypeDataWriter) pub.create_datawriter(topico, dwQos, dwListener, mask());
+//				}
+//				return dwSaturacaoOxigenio;
+//			case Constantes.FREQUENCIA_PULSO:
+//				if (pub.lookup_datawriter(nome_topico) == null)
+//				{
+//					atribuirQos(pub, dp_sensor, nome_topico, topicoQoS, partition);
+//					dwFrequenciaPulso = (SinalVitalTypeDataWriter) pub.create_datawriter(topico, dwQos, dwListener, mask());
+//				}
+//				return dwFrequenciaPulso;
+//			case Constantes.FREQUENCIA_RESPIRATORIA:
+//				if (pub.lookup_datawriter(nome_topico) == null)
+//				{
+//					atribuirQos(pub, dp_sensor, nome_topico, topicoQoS, partition);
+//					dwFrequenciaRespiratoria = (SinalVitalTypeDataWriter) pub.create_datawriter(topico, dwQos, dwListener, mask());
+//				}
+//				return dwFrequenciaRespiratoria;
+//			case Constantes.TEMPERATURA:
+//				if (pub.lookup_datawriter(nome_topico) == null)
+//				{
+//					atribuirQos(pub, dp_sensor, nome_topico, topicoQoS, partition);
+//					dwTemperatura = (SinalVitalTypeDataWriter) pub.create_datawriter(topico, dwQos, dwListener, mask());
+//				}
+//				return dwTemperatura;
+//			default:
+//				return null;
+//		}
+	}
+	
+//	public static SinalVitalTypeDataWriter getSinalVitalTypeDataWriter(String nomeTopico, String partition)
+//	{
+//		switch (nomeTopico + partition){
+//		case Constantes.PRESSAO_SANGUINEA + Constantes.PARTITION_SINAL_VITAL:				
+//			return dwPressaoSanguinea;
+//		case Constantes.SATURACAO_OXIGENIO_SANGUE + Constantes.PARTITION_SINAL_VITAL:
+//			return dwSaturacaoOxigenio;
+//		case Constantes.FREQUENCIA_PULSO + Constantes.PARTITION_SINAL_VITAL:
+//			return dwFrequenciaPulso;
+//		case Constantes.FREQUENCIA_RESPIRATORIA + Constantes.PARTITION_SINAL_VITAL:
+//			return dwFrequenciaRespiratoria;
+//		case Constantes.TEMPERATURA + Constantes.PARTITION_SINAL_VITAL:
+//			return dwTemperatura;
+//		case Constantes.PRESSAO_SANGUINEA + Constantes.PARTITION_ALARME_PRESSAO_SANGUINEA_HIPERTENSAO_ESTAGIO_3:
+//			return dwPressaoSanguineaHipertensaoEstagio3;
+//		default:
+//			return null;
+//		}
+//	}
+	
+	// Gera o publisher com as respectivas QoS e associa a ele as QoS passadas do DataWriter.
+	private static void atribuirQos(Publisher pub, Topic topico,
+			HashMap<String, Object> topicoQoS,
+			String partition)
+	{	
+//		PublisherQos pub_qos = new PublisherQos();
+//		dp_sensor.get_default_publisher_qos(pub_qos);
+//		pub_qos.partition.name.add(partition);
+//		pub_qos.entity_factory.autoenable_created_entities = false;
+//		pub = dp_sensor.create_publisher(pub_qos, null, 0);
+		
+		dwQos = new DataWriterQos();
+		
+		pub.get_default_datawriter_qos(dwQos);
+		float deadline = (float)topicoQoS.get(Constantes.QoS_deadline);
+		if (deadline != -1.0) {
+			dwQos.deadline.period.sec     = (int)deadline;
+			dwQos.deadline.period.nanosec = (long)((deadline - (int)deadline) * 1000000000);
+		}
+		
+		float latency = (float)topicoQoS.get(Constantes.QoS_latency);
+		dwQos.latency_budget.duration.sec      = (int)latency;
+		dwQos.latency_budget.duration.nanosec  = (long)((latency - (int)latency) * 1000000000);
+		
+		HistoryQosPolicyKind history = (HistoryQosPolicyKind)topicoQoS.get(Constantes.QoS_history);
+		dwQos.history.kind = history;
+		if (history == HistoryQosPolicyKind.KEEP_LAST_HISTORY_QOS) 
+			dwQos.history.depth = (int)topicoQoS.get(Constantes.QoS_history_depth);
+		dwQos.reliability.kind = (ReliabilityQosPolicyKind)topicoQoS.get(Constantes.QoS_reliability);
+		dwQos.durability.kind  = (DurabilityQosPolicyKind)topicoQoS.get(Constantes.QoS_durability);
+		dwQos.ownership.kind   = (OwnershipQosPolicyKind)topicoQoS.get(Constantes.QoS_ownership);
+		dwQos.ownership_strength.value = (int)topicoQoS.get(Constantes.QoS_ownership_strength);
+		dwQos.writer_data_lifecycle.autodispose_unregistered_instances = true;
+	}
+	
+	private static long mask()
+	{
+		//Aqui se define os métodos do DataWriter Listener que serão executados.
+		return DDS.PUBLICATION_MATCHED_STATUS|
+				DDS.LIVELINESS_LOST_STATUS |
+				DDS.OFFERED_DEADLINE_MISSED_STATUS |
+				DDS.OFFERED_INCOMPATIBLE_QOS_STATUS;
+		//return 0;
+	}
+}
