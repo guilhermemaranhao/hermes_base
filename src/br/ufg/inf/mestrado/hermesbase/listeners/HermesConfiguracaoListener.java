@@ -15,6 +15,12 @@ import com.toc.coredx.DDS.SampleLostStatus;
 import com.toc.coredx.DDS.SampleRejectedStatus;
 import com.toc.coredx.DDS.SubscriptionMatchedStatus;
 
+/**
+ * Listener do HB que recebe as notificações de configuração do middleware. Possui uma instância de ComponenteConfiguracaoListener, que
+ * relativo à instância do listener do assinante. Dessa instância, notificará o assinante por meio do método handleContext() no método on_data_available(). 
+ * @author guilhermemaranhao
+ *
+ */
 public class HermesConfiguracaoListener implements DataReaderListener {
 
 	private ComponenteConfiguracaoListener configuracaoListener;
@@ -34,6 +40,10 @@ public class HermesConfiguracaoListener implements DataReaderListener {
 		return 0;
 	}
 
+	/**
+	 * Método da API do vendor coredx, que é acionado quando uma notificação chega ao assinante. Definiu-se que as amostras com estado NOT_READ_SAMPLE_STATE
+	 * seriam repassadas ao assinantes, caso ainda sejam válidas.
+	 */
 	@Override
 	public void on_data_available(DataReader datareader) {
 		

@@ -5,6 +5,11 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.ReadWrite;
 import com.hp.hpl.jena.tdb.TDBFactory;
 
+/**
+ * Gerenciador de TDB não acessado por Hermes até o momento.
+ * @author guilhermemaranhao
+ *
+ */
 public class HermesGerenciadorTDB {
 	
 	Dataset dataset = null;

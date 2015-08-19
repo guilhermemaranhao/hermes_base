@@ -26,8 +26,11 @@ import br.ufg.inf.mestrado.hermesbase.listeners.HermesFilteringListener;
 import br.ufg.inf.mestrado.hermesbase.listeners.HermesNotificacaoListener;
 import br.ufg.inf.mestrado.hermesbase.utils.Constantes;
 
+import com.hp.hpl.jena.tdb.store.Hash;
 import com.toc.coredx.DDS.DDS;
+import com.toc.coredx.DDS.DataReader;
 import com.toc.coredx.DDS.DataReaderQos;
+import com.toc.coredx.DDS.DataWriter;
 import com.toc.coredx.DDS.DataWriterQos;
 import com.toc.coredx.DDS.DiscoveryQosPolicy;
 import com.toc.coredx.DDS.DomainParticipant;
@@ -46,13 +49,25 @@ import com.toc.coredx.DDS.Topic;
 import com.toc.coredx.DDS.TopicDescription;
 import com.toc.coredx.DDS.coredx;
 
-/*
- * Comunica com o Middleware CoreDX para publicação e assinatura de tópicos.
+/**
+ * Classe central no HB, pois expõe os métodos para criação de tópicos, publicadores e assinantes. Será utilizado o termo 'participante' para identificador tanto 
+ * publicadores quanto assinantes em DDS.
+ * Todos os participantes em DDS devem criar localmente os tópicos com os quais interagirão. Não há um servidor de tópicos em que um participante possa acessar
+ * os tópicos. Ele precisa tê-los localmente em sua máquina de execução.
+ * Cada tópico em DDS está associado a uma estrutura DDL que descreve os dados suportados pelo tópico, e que serão trafegados na comunicação publicador/assinante.
+ * Assim, para cada DDL, o vendor DDS cria classes específicas para manipulação dessa estrutura, por exemplo, para o DDL notificacao, o vendor coreDX gera as classes
+ * NotificacaoType.java, NotificacaoTypeDataReader.java, NotificacaoTypeDataWriter.java, NotificacaoTypeSeq.java, NotificacaoTypeTypeSupport.java
+ * @author guilhermemaranhao
  */
 public class HermesBaseManager {
 	
 	DomainParticipant dominio_participante       = null;
 	
+	/**
+	 * O construtor instancia um domain participant, objeto central na comunicação via DDS pois se refere ao domínio pelo qual os publicadores e assinantes
+	 * estabelecerão a sua comunicação. Uma ambiente DDS pode conter vários domain participants, entretanto, o HB só instancia um para comunicação em Hermes.
+	 * Um domain participant é identificado por uma valor numérico, que no caso de Hermes é a chave 123.
+	 */
 	public HermesBaseManager(){
 		DomainParticipantFactory dpf = DomainParticipantFactory.get_instance();
 		dominio_participante = dpf.lookup_participant(123);
@@ -70,6 +85,11 @@ public class HermesBaseManager {
 		}
 	}
 	
+	/**
+	 * Este método cria um tópico para o DDL notificacao, que é utilizado para comunicar os dados de contexto dos HWs.
+	 * 
+	 * @param nome_topico nome do tópico que deseja ser criado.
+	 */
 	public void createNotificationTopic(String nome_topico)
 	{
 		NotificacaoTypeTypeSupport notificacaoTypeTypeSupport = new NotificacaoTypeTypeSupport();
@@ -77,6 +97,11 @@ public class HermesBaseManager {
 		dominio_participante.create_topic(nome_topico, "NotificacaoType", DDS.TOPIC_QOS_DEFAULT, null, coredx.getDDS_ALL_STATUS());
 	}
 	
+	/**
+	 * Este método cria um tópico para o DDL configuracao, que é utilizado para alterar os itens de configuração dos componentes.
+	 * 
+	 * @param nome_topico nome do tópico que deseja ser criado.
+	 */
 	public void createConfigurationTopic(String nome_topico)
 	{
 		ConfiguracaoTypeTypeSupport conSupport = new ConfiguracaoTypeTypeSupport();
@@ -84,6 +109,11 @@ public class HermesBaseManager {
 		dominio_participante.create_topic(nome_topico, "ConfiguracaoType", DDS.TOPIC_QOS_DEFAULT, null, coredx.getDDS_ALL_STATUS());
 	}
 	
+	/**
+	 * Este método cria um tópico para o DDL filtragem, que é utilizado para comunicar os filtros de assinantes ao HI.
+	 * 
+	 * @param nome_topico nome do tópico que deseja ser criado.
+	 */
 	public void createFilteringTopic(String nome_topico)
 	{
 		FilteringTypeTypeSupport filterSupport = new FilteringTypeTypeSupport();
@@ -91,6 +121,15 @@ public class HermesBaseManager {
 		dominio_participante.create_topic(nome_topico, "FilteringType", DDS.TOPIC_QOS_DEFAULT, null, coredx.getDDS_ALL_STATUS());
 	}
 	
+	/**
+	 * Método que efetua a assinatura do tópico de notificação. Se é informado um filtro para o tópico, cria-se uma chave no formato UUID que será informada ao HI
+	 * para identificação do assinante na rede DDS. Essa chave será utilizada como a política de QoS partition e assim, somente o respectivo assinante será notificado
+	 * quando seu contexto for filtrado. Para isso, obtém instância da classe {@link Subscriber}, que é um container de {@link DataReader} e instância um data reader para o tópico.
+	 * @param nomeTopico nome do tópico assinado.
+	 * @param complementoTopico utilizado como a política partition QoS. Até o momento não é utilizado por nenhum assinante em Hermes.
+	 * @param listener Instância da classe listener do assinante. Deve implementar a interface {@link ComponenteNotificacaoListener}, que será invocado por HB por meio do método handleContext(). 
+	 * @param filtroJson filtro com os parâmetros assinados.
+	 */
 	public void subscribeNotificationTopic (String nomeTopico, String complementoTopico, ComponenteNotificacaoListener listener, HashMap<String, String> filtroJson) 
 	{
 		if (filtroJson != null)
@@ -134,6 +173,12 @@ public class HermesBaseManager {
 		sub.create_datareader(td, getQosDataReader(sub, getQoSAssinante(nomeTopico)), hermesListener, maskDataReader());
 	}
 	
+	/**
+	 * Método que efetua a assinatura do tópico de filtragem. Para isso, obtém instância da classe {@link Subscriber}, que é um container de {@link DataReader} e instância um data reader para o tópico.
+	 * @param nomeTopico nome do tópico de filtragem
+	 * @param complementoTopico
+	 * @param listener Instância da classe listener do assinante. Deve implementar a interface {@link ComponenteFilteringListener}, que será invocado por HB por meio do método handleContext().
+	 */
 	public void subscribeFilteringTopico(String nomeTopico, String complementoTopico, ComponenteFilteringListener listener)
 	{
 		Subscriber sub = SubscriberFactory.getInstance(dominio_participante, complementoTopico);
@@ -145,6 +190,12 @@ public class HermesBaseManager {
 		sub.create_datareader(td, getQosDataReader(sub, getQoSAssinante(nomeTopico)), hermesListener, maskDataReader());
 	}
 	
+	/**
+	 * Método que efetua a assinatura do tópico de configuração. Para isso, obtém instância da classe {@link Subscriber}, que é um container de {@link DataReader} e instância um data reader para o tópico.
+	 * @param nomeTopico nome do tópico de filtragem
+	 * @param complementoTopico
+	 * @param listener Instância da classe listener do assinante. Deve implementar a interface {@link ComponenteConfiguracaoListener}, que será invocado por HB por meio do método handleContext().
+	 */
 	public void subscribeConfigurationTopic(String nome_topico, String complementoTopico, ComponenteConfiguracaoListener listener) 
 	{
 		Subscriber sub = SubscriberFactory.getInstance(dominio_participante, complementoTopico);
@@ -156,6 +207,16 @@ public class HermesBaseManager {
 		sub.create_datareader(td, getQosDataReader(sub, getQoSAssinante(nome_topico)), hermesListener, maskDataReader());
 	}
 	
+	/**
+	 * Cria um objeto {@link DataWriter} de notificação para o tópico em questão. Esse objeto será utilizado posteriormente para publicação de contexto.
+	 * @param idEntidade Entidade principal da publicação. Utilizado apenas para orientar os assinantes sobre o contexto que está sendo publicado.
+	 * @param nomeTopico Nome do tópico ao qual o publicador está associado. Utilizado para criar o objeto da classe {@link Topic} que será adicionado no {@link DataWriter}
+	 * @param complementoTopico Se houver complemento, será utilizado como a política de QoS partition.
+	 * @param caminhoOntologia Orienta o assinante sobre o domínio de contexto que está sendo publicado.
+	 * @param contexto Principal informação entre os argumentos do método. Contém o objeto de contexto serializado.
+	 * @param tipoSerializacao Utilizado para orientar o assinante no procedimento de deserialização do objeto de contexto.
+	 * @return sucesso ou não da operação de criação do publicador
+	 */
 	public boolean publishNotification(String idEntidade, String nomeTopico, String complementoTopico, String caminhoOntologia, byte[] contexto, String tipoSerializacao)
 	{
 		NotificacaoType notificacao = new NotificacaoType(idEntidade, nomeTopico, complementoTopico, caminhoOntologia, contexto, tipoSerializacao);
@@ -178,6 +239,15 @@ public class HermesBaseManager {
 		return true;
 	}
 	
+	/**
+	 * Cria um objeto {@link DataWriter} de filtragem para o tópico em questão. Esse objeto será utilizado posteriormente para publicação de filtro.
+	 * @param nomeTopico nome do tópico para o qual se deseja criar um publicador.
+	 * @param complementoTopico complemento de tópico, se existente
+	 * @param idFiltro identificador do filtro para ser utilizado pelo HI como partition de suas publicações
+	 * @param nomeTopicoParaFiltragem nome do tópico para o qual o filtro está associado.
+	 * @param filtroJson parâmetros de filtros.
+	 * @return sucesso ou falha da criação de publicador
+	 */
 	private boolean publishFiltering(String nomeTopico, String complementoTopico, String idFiltro, String nomeTopicoParaFiltragem, byte[] filtroJson)
 	{
 		FilteringType filtragem = new FilteringType(idFiltro, nomeTopicoParaFiltragem, filtroJson, null);
@@ -200,6 +270,14 @@ public class HermesBaseManager {
 		return true;
 	}
 	
+	/**
+	 * Cria publicador {@link DataWriter}, para o tópico de configuração. Até o momento, utilizado para configurar tipo de inferência para lista de tópicos.
+	 * @param nomeTopico nome do tópico para o qual se deseja criar um publicador.
+	 * @param complementoTopico política de QoS partition, se existir
+	 * @param tipoInferencia novo tipo de inferência para tópico
+	 * @param topicos lista de tópicos que terão o tipo de inferência configurado.
+	 * @return sucesso ou falha da operação de criação de publicador
+	 */
 	public boolean publishConfiguration(String nomeTopico, String complementoTopico, String tipoInferencia, String[] topicos)
 	{
 		ConfiguracaoType configuracaoType = new ConfiguracaoType(tipoInferencia, topicos);
@@ -223,6 +301,11 @@ public class HermesBaseManager {
 		
 	}
 	
+	/**
+	 * Retorna políticas de Qos padrão para publicador.
+	 * @param nome_topico
+	 * @return objeto {@link HashMap} com políticas e valores
+	 */
 	private HashMap<String, Object> getQoSPublicador(String nome_topico)
 	{
 		//Período máximo em que o publicador se compromete a publicar algo. Deadline pode ser parametrizado com o valor da frequencia de leitura de sensor.
@@ -254,6 +337,11 @@ public class HermesBaseManager {
 		return topicosQoS;
 	}
 	
+	/**
+	 * Retorna políticas de Qos padrão para assinante.
+	 * @param nome_topico
+	 * @return objeto {@link HashMap} com políticas e valores
+	 */
 	private HashMap<String, Object> getQoSAssinante(String nome_topico)
 	{
 		//Período máximo que o assinante deseja ser notificado. Deadline pode ser parametrizado com o valor da frequencia de leitura de sensor.
@@ -288,7 +376,11 @@ public class HermesBaseManager {
 		return topicosQoS;
 	}
 	
-	
+	/**
+	 * Cria objeto da API , {@link DataWriterQos} com valores estáticos de QoS.
+	 * @param nome_topico
+	 * @return objeto {@link DataWriterQos}
+	 */
 	private static DataWriterQos getQosDataWriter(Publisher pub, HashMap<String, Object> topicoQoS)
 		{	
 			DataWriterQos dwQos = new DataWriterQos();
@@ -317,6 +409,11 @@ public class HermesBaseManager {
 			return dwQos;
 		}
 		
+	/**
+	 * Cria objeto da API , {@link DataReaderQos} com valores estáticos de QoS.
+	 * @param nome_topico
+	 * @return objeto {@link DataReaderQos}
+	 */
 	private static DataReaderQos getQosDataReader(Subscriber sub, HashMap<String, Object> topicoQos)
 	{	
 		DataReaderQos drQos = new DataReaderQos();

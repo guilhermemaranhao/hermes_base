@@ -3,15 +3,29 @@ package br.ufg.inf.mestrado.hermesbase.factory;
 import java.util.ArrayList;
 
 import com.toc.coredx.DDS.DDS;
+import com.toc.coredx.DDS.DataWriter;
 import com.toc.coredx.DDS.DomainParticipant;
 import com.toc.coredx.DDS.Publisher;
 import com.toc.coredx.DDS.PublisherQos;
 import com.toc.coredx.DDS.ReturnCode_t;
 
+/**
+ * Fábrica que cria instâncias de objetos {@link Publisher} a partir da política de QoS partition. Os objetos {@link Publisher} são containers de {@link DataWriter} no DDS.
+ * Se algum {@link Publisher} já criado atender a política partition especificada, ele é retornado. Como a única política de QoS parametrizada por Hermes até o momento é partition,
+ * somente ela foi considerada na avaliação.
+ * @author guilhermemaranhao
+ *
+ */
 public class PublisherFactory {
 
 	private static ArrayList<Publisher> publishers = new ArrayList<>();
 	
+	/**
+	 * Retorna uma instância de {@link Publisher} que atenda a política partition informada.
+	 * @param domain domínio DDS
+	 * @param partition política partition exigida
+	 * @return instância de {@link Publisher}
+	 */
 	public static Publisher getInstance(DomainParticipant domain, String partition)
 	{
 		

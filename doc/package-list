@@ -1,0 +1,8 @@
+br.ufg.inf.mestrado.hermesbase
+br.ufg.inf.mestrado.hermesbase.coreDX.configuracao
+br.ufg.inf.mestrado.hermesbase.coreDX.filtering
+br.ufg.inf.mestrado.hermesbase.coreDX.notificacao
+br.ufg.inf.mestrado.hermesbase.factory
+br.ufg.inf.mestrado.hermesbase.listeners
+br.ufg.inf.mestrado.hermesbase.persistencia.tdb
+br.ufg.inf.mestrado.hermesbase.utils
