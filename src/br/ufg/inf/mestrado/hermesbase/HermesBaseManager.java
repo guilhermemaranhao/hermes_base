@@ -57,6 +57,8 @@ import com.toc.coredx.DDS.coredx;
  * Cada tópico em DDS está associado a uma estrutura DDL que descreve os dados suportados pelo tópico, e que serão trafegados na comunicação publicador/assinante.
  * Assim, para cada DDL, o vendor DDS cria classes específicas para manipulação dessa estrutura, por exemplo, para o DDL notificacao, o vendor coreDX gera as classes
  * NotificacaoType.java, NotificacaoTypeDataReader.java, NotificacaoTypeDataWriter.java, NotificacaoTypeSeq.java, NotificacaoTypeTypeSupport.java
+ * Informações detalhadas sobre DDS podem ser obtidas no tutorial: DDS_to_Real_Time_Systems.pdf na pasta doc desse projeto. Documentação sobre o vendor coredx podem ser
+ * obtidas pelos links: http://www.coredx.com/documents/CoreDX_DDS_Programmers_Guide_v3.6.pdf e http://www.coredx.com/documents/refman_html_3.6.8/CoreDX_DDS_Java_Reference_3.6.8/index.html
  * @author guilhermemaranhao
  */
 public class HermesBaseManager {
